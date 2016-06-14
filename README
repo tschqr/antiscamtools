@@ -1,0 +1,213 @@
+1. Background
+
+Ever see those youtube videos where a computer technician takes on a
+fake tech support scammer?
+
+Example: https://www.youtube.com/watch?v=PjSKZm_pdcE
+
+The basic outline is this:
+
+  User sees a web page with a fake error message and a phone number, and
+  calls the number.
+
+  Scammer answers the call, and directs User to give remote access to
+  the computer.
+
+  User watches while Scammer "investigates" the fake error, and points
+  out fake problems.
+
+  Scammer offers to fix the nonexistent problems and asks User for a
+  credit card payment.
+
+One frequently used trick during the diagnosis phase for the scammer to
+start a CMD window and run the tree command from the root directory. The
+scammer explains that it is a virus scan. It isn't. The tree command
+just prints the names of all the directories on the drive.
+
+It takes some time for tree to finish. While it's running, the scammer
+types "OMG YOU HAVE ALL THE VIRUSES!" or something to that effect. You
+can't see what they're typing while they're typing it, because all the
+directory names are scrolling by so fast. When the tree finishes,
+whatever the scammer typed appears at the next prompt. The scammer
+claims that it is a message printed by the virus scanner.
+
+2. Idea
+
+What if the tree command betrayed the scammer by unambiguously marking
+the keyboard input as being a typed message? What if it separated the
+typed message from the tree output by putting it in a separate window?
+They'd probably be surprised by that.
+
+3. Implementation
+
+I took the idea and brought it to life. I call it stree (for "scammer
+tree"). It's not a minimal implementation. I went crazy with it. For
+example, it's not a fake tree program. It's a real tree program.
+As far as I can tell, except for a bug with UNC paths that I couldn't
+fix, it's feature-equivalent to the one in Windows 7, right up to the
+flags (there are 2 of them, or 3 if you count the /? help) and the error
+messages that are printed for various combinations of invalid arguments.
+
+The best moment in development of this thing was when I tried running my
+tree program with a single argument consisting of a space character. It
+crashed. Realizing I needed to add a special case to handle that, I ran
+the original tree program with a single argument consisting of a space
+character to see what the behavior should be. It crashed.
+
+So stree is really very much like original tree, until you hit a key.
+
+Then a new window appears next to your CMD window, and your keypress is
+displayed there. Your next keypresses go straight to this chat window.
+
+Like the tree-printing portion of the program, the chat window is loaded
+with unnecessary features, in the hope that a scammer will bump into
+them and it will be funny.
+
+For example: if you were typing something and it showed up in the wrong
+window, you'd erase it, right? Go ahead and try. Didn't work, did it?
+Think of something else to try. I blocked that too! Think harder. Now
+you've got it. No, I blocked that too!
+
+(If you want to know what all the blocked things are, read the source
+code. If you thought of another thing I should have blocked, then
+congratulations! You win thing-knowing.)
+
+4. To build (or not to build)
+
+4.1. Build it
+
+Yes, that's a Makefile. Do not panic. I'm not a Windows programmer in
+real life. This is my first C# program, and I developed it with the help
+of GNU make in cygwin. I don't know if there's a way to run the Makefile
+with Windows-native tools, and I don't care. So get a make program, or
+just run the csc commands manually:
+
+  csc /nologo /warn:4 stree.cs parentprocessutilities.cs
+  csc /nologo /warn:4 /target:winexe streecw.cs streecwform.cs
+
+Finding the right path to csc is up to you.
+
+4.2. Don't build it
+
+Or skip all that and look for a release on github. I will make a release
+with the exe files in it as soon as possible. (And if you didn't find
+this project by random chance, that means I probably told someone about
+it, which means I probably did the release already.)
+
+5. Installation
+
+Once you have stree.exe and streecw.exe, copy them to your scammer-bait
+virtual machine, replacing the existing tree command (you should rename
+stree.exe to tree.exe, but leave streecw.exe as is).
+
+Also copy streecw.ico into the same directory as streecw.exe so you'll
+get an appropriate... I mean "appropriate"... icon for the chat window
+in the task bar.
+
+6. Loopholes
+
+After a weekend of work, this program turned out almost exactly like I
+planned it. But it's not perfect. Some things aren't handled.
+
+6.1. Pasting
+
+What if the scammer pastes into the CMD window instead of typing? Well,
+the chat window comes up and whatever they pasted shows up there, so
+basically it's working correctly. But the fact that it shows up all at
+once, instead of one keypress at a time, makes it less funny.
+
+Instead of "Ha! I just watched you type '147 infections found'!" it turns
+into "Ha! Your fake message showed up in a different window than you
+were expecting!" They may be surprised, but if they're good at
+improvising, they should be able to continue, claiming that the
+unexpected window is the scan result window. And then you're back to the
+basic interaction that occurs in all of these videos:
+
+  User: I know you're lying because I'm not stupid.
+
+  Scammer: I'm not lying! Give me money!
+
+  User: I know what the tree command is for.
+
+  Scammer: Give me even more money!
+
+  User: No. You're stupid.
+
+  Scammer: Your computer's really broken now! I'm deleting everything!
+
+  User: It's a virtual machine.
+
+  Scammer: Files destroyed! I win.
+
+  User: You're still stupid.
+
+Would it be better to feed the pasted text slowly to the chat window, so
+it looks like it's being typed?
+
+6.2. Ctrl-C
+
+Ctrl-C terminates stree, just like the real tree. All the keypresses
+from before the Ctrl-C have been redirected to the chat window, so you
+get a clean prompt afterward. I'm not sure this is the best way of
+handling it. Would it be funnier to ignore Ctrl-C and make the scammer
+wait for the tree to finish? Or pop up another crazy window that says
+"Hey, tree is still running, why are you trying to Ctrl-C it?"
+
+6.3. Window closing
+
+The chat window has no titlebar, so no X button or minimize button. But
+it's not extremely difficult to close the window. If you do that, the
+tree just keeps printing until it's finished, ignoring all further
+keypresses. Should I try to make it more difficult to close the window?
+Respawn the window after it's closed if more keypresses are directed at
+the CMD window where tree is running?
+
+7. Future
+
+7.1. New features
+
+I don't plan on doing anything else with this program. But if there are
+requests, I'll read them.
+
+7.2. Additional programs
+
+What would a scammer say if msconfig and/or task manager showed all
+services as running?
+
+What if event viewer didn't have any warnings or errors?
+
+Even better, what if those programs looked normal at first, but then
+this happened:
+
+  Scammer: Oh noes, Stopped services!
+
+  User: Hold on, I know how to fix that...
+
+  [User grabs the window by the titlebar and shakes it back and forth,
+  causing all the "Stopped" labels to change to "Running"]
+
+  User: What else ya got?
+
+Or this:
+
+  Scammer: It's totally not normal to have warnings and errors in your
+  event log.
+
+  User: Wait a sec.
+
+  [User activates the magic, using a mechanism not visible to the scammer]
+
+  User: Boosh! and/or Kakow!
+
+  [All the "Warning" messages are now "Normal", with a rainbow instead
+  of a yellow triangle, and the "Error" messages are now "Awesome" with
+  a happy face.]
+
+  Scammer: ...
+
+No, I'm not crazy enough to attempt to recreate the full functionality
+of event viewer or task manager just so I can add jokes to it. But maybe
+a fake one, where the only UI components that do anything are the ones
+frequently used by scammers, and the information displayed is just a set
+of hardcoded strings instead of being read from the system... might be
+doable.
